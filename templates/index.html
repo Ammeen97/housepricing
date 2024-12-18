@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>House Price Prediction</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>House Price Prediction</h1>
+
+        <!-- Button to Go Back to Home -->
+        <button onclick="showHome()">Home</button>         
+
+        <!-- Dropdown to choose batch or individual prediction -->
+        <label for="predictionType">Prediction Type:</label>
+        <select id="predictionType">
+            <option value="batch">Batch Prediction (Train/Test File)</option>
+            <option value="individual">Individual Prediction (Custom Inputs)</option>
+        </select>
+
+        <!-- Batch Prediction Form -->
+        <form id="batchForm">
+            <label for="file">Choose a file:</label>
+            <select id="file" name="file">
+                <option value="train">Train</option>
+                <option value="test">Test</option>
+            </select>
+            <button type="submit">Get Prediction</button>
+        </form>
+
+        <!-- Individual Prediction Form -->
+        <form id="individualForm" style="display:none;">
+            <label for="area">Area:</label>
+            <input type="number" id="area" name="area" placeholder="Enter area" required>
+
+            <label for="year_built">Year Built:</label>
+            <input type="number" id="year_built" name="year_built" placeholder="Enter year built" required>
+
+            <button type="submit">Predict Price</button>
+        </form>
+
+        <!-- New Buttons for Submission and Test Data Display -->
+        <button onclick="loadSubmissionData()">Load Submission Data</button>
+        <button onclick="loadTestData()">Load Test Data</button>
+
+        <!-- Result and Feedback Section -->
+        <div id="loading" style="display:none;">Loading...</div>
+        <div id="result"></div>
+        <div id="error" style="color:red;"></div>
+
+        <!-- Sections to display Submission and Test Data as tables -->
+        <h2>Submission Data</h2>
+        <div id="submission-data"></div>
+
+        <h2>Test Data</h2>
+        <div id="test-data"></div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    
+    <script>
+    // Function to load and display Submission Data
+    function loadSubmissionData() {
+        fetch('/get_submission_data')
+            .then(response => response.json())
+            .then(data => {
+                displayData("submission-data", data);
+                showHomeButton("submission-data"); // Show home button specifically for submission data
+            })
+            .catch(error => console.error('Error loading submission data:', error));
+    }
+
+    // Function to load and display Test Data
+    function loadTestData() {
+        fetch('/get_test_data')
+            .then(response => response.json())
+            .then(data => {
+                displayData("test-data", data);
+            })
+            .catch(error => console.error('Error loading test data:', error));
+    }
+
+    // Function to display JSON data as a table
+    function displayData(elementId, data) {
+        let container = document.getElementById(elementId);
+        container.innerHTML = "";  // Clear previous content
+
+        // Create table
+        let table = document.createElement("table");
+        let headerRow = document.createElement("tr");
+
+        // Add table headers based on the first data object
+        if (data.length > 0) {
+            Object.keys(data[0]).forEach(key => {
+                let th = document.createElement("th");
+                th.textContent = key;
+                headerRow.appendChild(th);
+            });
+            table.appendChild(headerRow);
+
+            // Add table rows for each item
+            data.forEach(item => {
+                let row = document.createElement("tr");
+                Object.values(item).forEach(value => {
+                    let td = document.createElement("td");
+                    td.textContent = value;
+                    row.appendChild(td);
+                });
+                table.appendChild(row);
+            });
+        } else {
+            // Display a message if there's no data
+            let noDataMessage = document.createElement("p");
+            noDataMessage.textContent = "No data available";
+            container.appendChild(noDataMessage);
+            return;
+        }
+
+        container.appendChild(table);
+    }
+
+    // Function to show the Home button
+    function showHomeButton(elementId) {
+        let container = document.getElementById(elementId);
+
+        // Create and add the Home button
+        let homeButton = document.createElement("button");
+        homeButton.textContent = "Home";
+        homeButton.onclick = showHome;
+        container.appendChild(homeButton);
+    }
+
+    // Function to go back to the home view
+    function showHome() {
+        document.getElementById('result').innerHTML = "";
+        document.getElementById('error').innerHTML = "";
+        document.getElementById('submission-data').innerHTML = "";
+        document.getElementById('test-data').innerHTML = "";
+    }
+
+    // JavaScript to handle form visibility based on prediction type
+    document.getElementById('predictionType').addEventListener('change', function() {
+        const type = this.value;
+        document.getElementById('batchForm').style.display = type === 'batch' ? 'block' : 'none';
+        document.getElementById('individualForm').style.display = type === 'individual' ? 'block' : 'none';
+    });
+</script>
+
+</body>
+</html>
+
+
